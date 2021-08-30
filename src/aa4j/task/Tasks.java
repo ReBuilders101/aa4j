@@ -19,7 +19,7 @@ public final class Tasks {
 	 * @return A {@link TaskAccess} containing all representations of the task
 	 */
 	public static <T> TaskAccess<T> manualBlocking() {
-		return new BlockingTask<>(new CompletableFuture<>(), null);
+		return new NonBlockingTask<>(new CompletableFuture<>(), null);
 	}
 	
 	/**
@@ -33,19 +33,19 @@ public final class Tasks {
 	 */
 	public static <T> TaskAccess<T> manualBlocking(Runnable cancellationHandler) {
 		Objects.requireNonNull(cancellationHandler, "'cancellationHandler' parameter must not be null");
-		return new BlockingTask<>(new CompletableFuture<>(), cancellationHandler);
+		return new NonBlockingTask<>(new CompletableFuture<>(), cancellationHandler);
 	}
 	
 	public static Task delay(long time, TimeUnit unit) {
 		if(time < 0) throw new IllegalArgumentException("time cannot be negative");
 		Objects.requireNonNull(unit, "'unit' parameter must not be null");
-		return new BlockingTask<>(new CompletableFuture<>().completeOnTimeout(null, time, unit), null).task();
+		return new NonBlockingTask<>(new CompletableFuture<>().completeOnTimeout(null, time, unit), null).task();
 	}
 	
 	public static Task delayCancellable(long time, TimeUnit unit) {
 		if(time < 0) throw new IllegalArgumentException("time cannot be negative");
 		Objects.requireNonNull(unit, "'unit' parameter must not be null");
-		return new BlockingTask<>(new CompletableFuture<>().completeOnTimeout(null, time, unit), AA4JStatic.NOOP).task();
+		return new NonBlockingTask<>(new CompletableFuture<>().completeOnTimeout(null, time, unit), AA4JStatic.NOOP).task();
 	}
 	
 }

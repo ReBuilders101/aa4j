@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture;
  * A task that represents waiting for some action to occur that completes the task.
  * @param <T> The result type of the task
  */
-/*package*/ final class BlockingTask<T> extends AbstractCompletableFutureTask<T>{
+/*package*/ final class NonBlockingTask<T> extends AbstractCompletableFutureTask<T>{
 	
 	/**
 	 * @param usedCpf The {@link CompletableFuture} for this task
@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 	 * @param runHandlerWhenPrevented Run cancel handler when task never started
 	 * BUT: handler will only run when cancellation is happening
 	 */
-	protected BlockingTask(CompletableFuture<T> usedCpf, Runnable cancelHandler) {
+	protected NonBlockingTask(CompletableFuture<T> usedCpf, Runnable cancelHandler) {
 		super(usedCpf, cancelHandler != null);
 		this.cpf.whenComplete(whenCancelledImpl(cancelHandler)); //Run that automatically when cancelling
 	}
