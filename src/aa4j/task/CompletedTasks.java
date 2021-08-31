@@ -17,6 +17,8 @@ import aa4j.AA4JStatic;
 /*package*/ final class CompletedTasks {
 	private CompletedTasks() { throw new RuntimeException("No instance for you"); }
 	
+	static final Task success_untyped = success(null).task();
+	
 	static <T> TaskOf<T> success(T value) {
 		return new AnyResult<T>(value, null, TaskState.SUCCEEDED, false);
 	}

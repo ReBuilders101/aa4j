@@ -72,6 +72,21 @@ public final class CancellationToken {
 	}
 	
 	/**
+	 * Sends a cancellation request to the associated action if the token is bound to
+	 * an action, or invalidates the token by assigning an empty action before cancelling.
+	 */
+	public void cancelOrInvalidate() {
+		if(!this.binding.compareAndSet(null, () -> {})) { //If true, it was just invalidated. Now no action can be assigned
+			//if false, it was already bound, and that action has to be cancelled
+			var snap = this.binding.get();
+			if(!used.compareAndSet(false, true)) return; //Already cancelled
+			snap.run();
+		} else { //invalidated, mark as cancelled (no need to run the NOOP)
+			used.set(true);
+		}
+	}
+	
+	/**
 	 * Assigns an action to this token.
 	 * @param action The assigned action
 	 * @param ex the exception when the token is bound
@@ -100,7 +115,7 @@ public final class CancellationToken {
 	 */
 	public static CancellationToken taskToken(TaskOf<?> task) {
 		var t = new CancellationToken();
-		t.assignAction(task::cancel,()->null);
+		t.assignAction(task::cancel,() -> null);
 		return t;
 	}
 	
@@ -113,7 +128,7 @@ public final class CancellationToken {
 	 */
 	public static CancellationToken taskToken(Task task) {
 		var t = new CancellationToken();
-		t.assignAction(task::cancel, ()->null);
+		t.assignAction(task::cancel, () -> null);
 		return t;
 	}
 	
@@ -125,7 +140,7 @@ public final class CancellationToken {
 	 */
 	public static CancellationToken stateToken() {
 		var t = new CancellationToken();
-		t.assignAction(()->{}, ()->null);
+		t.assignAction(() -> {}, () -> null);
 		return t;
 	}
 }
