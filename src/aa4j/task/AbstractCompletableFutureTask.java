@@ -51,11 +51,21 @@ import aa4j.Awaiter;
 		}
 	}
 	
+	private static Exception extractCause(Exception e) {
+		final var c = e.getCause();
+		if(c == null) throw new NullPointerException("Exception has no cause");
+		return c instanceof Exception ? (Exception) c : new Exception("Wrapping non-Exception Throwable", c);
+	}
+	
 	protected abstract CancelResult cancelImpl();
 	
-	protected abstract boolean succeedImpl(T value);
+	protected boolean succeedImpl(T value) {
+		return cpf.complete(value);
+	}
 	
-	protected abstract boolean failImpl(Throwable ex);
+	protected boolean failImpl(Exception exception) {
+		return cpf.completeExceptionally(validateFailureReason(exception));
+	}
 	
 	private class TaskOfImpl implements TaskOf<T> {
 
@@ -166,14 +176,13 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public T getResult(Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws CancellationException, IllegalStateException {
 			if(!isDone()) throw new IllegalStateException("Task is not done"); //Do this before try/catch
 			try {
 				return cpf.get();
 			} catch (ExecutionException e) { //Fehler muss behandelt werden
-				final var ex = e.getCause();
-				if(ex == null) throw new NullPointerException("ExecutionException has no cause");
+				final var ex = extractCause(e);
 				throw remainingExs.apply(ex);
 			} catch (InterruptedException e) {
 				throw new RuntimeException("Thread had unhadled interrupt when retrieving task result", e);
@@ -182,16 +191,14 @@ import aa4j.Awaiter;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E1 extends Throwable> T getResult(Class<E1> ex1,
-				Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public <E1 extends Exception> T getResult(Class<E1> ex1,
+				Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws E1, CancellationException, IllegalStateException {
 			if(!isDone()) throw new IllegalStateException("Task is not done"); //Do this before try/catch
 			try {
 				return cpf.get();
 			} catch (ExecutionException e) { //Fehler muss behandelt werden
-				final var ex = e.getCause();
-				if(ex == null) throw new NullPointerException("ExecutionException has no cause");
-				
+				final var ex = extractCause(e);
 				if(ex1.isInstance(ex)) {
 					throw (E1) ex;
 				} else {
@@ -204,16 +211,14 @@ import aa4j.Awaiter;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E1 extends Throwable, E2 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2,
-				Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public <E1 extends Exception, E2 extends Exception> T getResult(Class<E1> ex1, Class<E2> ex2,
+				Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws E1, E2, CancellationException, IllegalStateException {
 			if(!isDone()) throw new IllegalStateException("Task is not done"); //Do this before try/catch
 			try {
 				return cpf.get();
 			} catch (ExecutionException e) { //Fehler muss behandelt werden
-				final var ex = e.getCause();
-				if(ex == null) throw new NullPointerException("ExecutionException has no cause");
-				
+				final var ex = extractCause(e);
 				if(ex1.isInstance(ex)) {
 					throw (E1) ex;
 				} else if(ex2.isInstance(ex)) {
@@ -228,16 +233,14 @@ import aa4j.Awaiter;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E1 extends Throwable, E2 extends Throwable, E3 extends Throwable> T getResult(Class<E1> ex1,
-				Class<E2> ex2, Class<E3> ex3, Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public <E1 extends Exception, E2 extends Exception, E3 extends Exception> T getResult(Class<E1> ex1,
+				Class<E2> ex2, Class<E3> ex3, Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws E1, E2, E3, CancellationException, IllegalStateException {
 			if(!isDone()) throw new IllegalStateException("Task is not done"); //Do this before try/catch
 			try {
 				return cpf.get();
 			} catch (ExecutionException e) { //Fehler muss behandelt werden
-				final var ex = e.getCause();
-				if(ex == null) throw new NullPointerException("ExecutionException has no cause");
-				
+				final var ex = extractCause(e);
 				if(ex1.isInstance(ex)) {
 					throw (E1) ex;
 				} else if(ex2.isInstance(ex)) {
@@ -275,7 +278,7 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public TaskOf<T> whenFailed(Consumer<? super Throwable> action) {
+		public TaskOf<T> whenFailed(Consumer<? super Exception> action) {
 			cpf.whenComplete(whenFailedImpl(action));
 			return this;
 		}
@@ -299,7 +302,7 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public TaskOf<T> whenFailedAsync(Consumer<? super Throwable> action) {
+		public TaskOf<T> whenFailedAsync(Consumer<? super Exception> action) {
 			cpf.whenCompleteAsync(whenFailedImpl(action));
 			return this;
 		}
@@ -469,7 +472,7 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public Task whenFailed(Consumer<? super Throwable> action) {
+		public Task whenFailed(Consumer<? super Exception> action) {
 			cpf.whenComplete(whenFailedImpl(action));
 			return this;
 		}
@@ -493,7 +496,7 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public Task whenFailedAsync(Consumer<? super Throwable> action) {
+		public Task whenFailedAsync(Consumer<? super Exception> action) {
 			cpf.whenCompleteAsync(whenFailedImpl(action));
 			return this;
 		}
@@ -560,7 +563,7 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public boolean fail(Throwable exception) {
+		public boolean fail(Exception exception) {
 			return failImpl(exception);
 		}
 
@@ -579,7 +582,7 @@ import aa4j.Awaiter;
 		}
 
 		@Override
-		public boolean fail(Throwable exception) {
+		public boolean fail(Exception exception) {
 			return failImpl(exception);
 		}
 
@@ -631,9 +634,10 @@ import aa4j.Awaiter;
 		return (value, ex) -> action.run();
 	}
 	
-	static <V> BiConsumer<V, ? super Throwable> whenFailedImpl(Consumer<? super Throwable> action) {
-		return (value, ex) -> {
-			if(ex == null) return; //This means success, we don't want that here
+	static <V> BiConsumer<V, ? super Throwable> whenFailedImpl(Consumer<? super Exception> action) {
+		return (value, th) -> {
+			if(th == null) return; //This means success, we don't want that here
+			var ex = th instanceof Exception ? (Exception) th : new Exception("Wrapping non-exception Throwable", th);
 			
 			var exc = unwrap(ex); //The true exception
 			if(!(exc instanceof CancellationException)) { //Only if not cancelled
@@ -643,8 +647,9 @@ import aa4j.Awaiter;
 	}
 	
 	static <V> BiConsumer<V, ? super Throwable> whenCancelledImpl(Runnable action) {
-		return (value, ex) -> {
-			if(ex == null) return; //This means success, we don't want that here
+		return (value, th) -> {
+			if(th == null) return; //This means success, we don't want that here
+			var ex = th instanceof Exception ? (Exception) th : new Exception("Wrapping non-exception Throwable", th);
 			
 			var exc = unwrap(ex); //The true exception
 			if(exc instanceof CancellationException) { //Only if cancelled
@@ -677,9 +682,9 @@ import aa4j.Awaiter;
 		}
 	}
 	
-	private static Throwable unwrap(Throwable ex) { //Unwraps all CompletionExceptions 
+	private static Exception unwrap(Exception ex) { //Unwraps all CompletionExceptions 
 		if(ex instanceof CompletionException && ex.getCause() != null) {
-			return unwrap(ex.getCause());
+			return unwrap(extractCause(ex));
 		} else {
 			return ex;
 		}

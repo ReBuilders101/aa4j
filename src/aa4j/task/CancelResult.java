@@ -8,6 +8,10 @@ public enum CancelResult {
 	 * The task was still running or not yet started
 	 * when the cancellation attempt was made, and the task was
 	 * either prevented from running or stopped successfully.
+	 * <p>
+	 * Note that the ability to cancel a task is a promise made by the implementation of the task,
+	 * and that it might take some time after this result is returned until all asynchronous
+	 * actions associated with this task have stopped.
 	 */
 	SUCCESSFULLY_CANCELLED(true),
 	/**
@@ -17,11 +21,11 @@ public enum CancelResult {
 	 */
 	UNABLE_TO_CANCEL(false),
 	/**
-	 * Cancellation of the task was not possible because
-	 * the task was running and did not react the request
-	 * to cancel the execution.
+	 * Cancellation of the task was possible and requested,
+	 * and the tasks state will switch to cancelled when the cancellation
+	 * was confirmed, or to failed/succeeded if one of those happens first
 	 */
-	REQUEST_IGNORED(false),
+	CANCELLATION_PENDING(false),
 	/**
 	 * Cancellation of the task is no longer possible
 	 * because it was already cancelled.

@@ -34,16 +34,6 @@ import java.util.concurrent.CompletableFuture;
 		}
 	}
 
-	@Override
-	protected boolean succeedImpl(T value) {
-		return cpf.complete(value);
-	}
-
-	@Override
-	protected boolean failImpl(Throwable ex) {
-		return cpf.completeExceptionally(validateFailureReason(ex));
-	}
-
 	private CancelResult fromDoneState() {
 		var state = getStateImpl();
 		if(!state.isDone()) throw new IllegalStateException("State is not done");

@@ -2,9 +2,15 @@ package aa4j.task;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import aa4j.AA4JStatic;
+import aa4j.function.ActiveCancellableTask;
+import aa4j.function.ActiveCancellableTaskOf;
+import aa4j.function.ActiveTask;
+import aa4j.function.ActiveTaskOf;
 
 /**
  * Provides static methods to create different kinds of tasks.
@@ -85,7 +91,7 @@ public final class Tasks {
 	 * @param failureReason The exception that caused the task to fail
 	 * @return A task that has failed with an exception
 	 */
-	public static <T> TaskOf<T> failure(Throwable failureReason) {
+	public static <T> TaskOf<T> failure(Exception failureReason) {
 		return CompletedTasks.failure(failureReason);
 	}
 	
@@ -96,7 +102,7 @@ public final class Tasks {
 	 * @param resultType The type of the task result
 	 * @return A task that has failed with an exception
 	 */
-	public static <T> TaskOf<T> failure(Throwable failureReason, Class<T> resultType) {
+	public static <T> TaskOf<T> failure(Exception failureReason, Class<T> resultType) {
 		return CompletedTasks.failure(failureReason);
 	}
 	
@@ -119,4 +125,102 @@ public final class Tasks {
 		return CompletedTasks.cancelled();
 	}
 	
+	
+	
+	
+	/**
+	 * Creates a Task that represents the {@link ActiveTask} running on a different thread.
+	 * Will use the {@link ForkJoinPool#commonPool()} for execution.
+	 * @param task The task to run on the executor thread
+	 * @return A {@link Task} object representing this task
+	 */
+	public static Task runnable(ActiveTask task) {
+		return runnable(task, ForkJoinPool.commonPool());
+	}
+	
+	/**
+	 * Creates a Task that represents the {@link ActiveTask} running on a different thread.
+	 * @param task The task to run on the executor thread
+	 * @param executor The {@link Executor} that determines the thread to run on
+	 * @return A {@link Task} object representing this task
+	 */
+	public static Task runnable(ActiveTask task, Executor executor) {
+		final BlockingTask<Void> t = new BlockingTask<>(new CompletableFuture<>(), false);
+		final TaskDriver<Void> d = new TaskDriver<>(t, task);
+		executor.execute(d);
+		return t.task;
+	}
+	
+	/**
+	 * Creates a cancellable Task that represents the {@link ActiveCancellableTask} running on a different thread.
+	 * Will use the {@link ForkJoinPool#commonPool()} for execution.
+	 * @param task The task to run on the executor thread
+	 * @return A {@link Task} object representing this task
+	 */
+	public static Task runnable(ActiveCancellableTask task) {
+		return runnable(task, ForkJoinPool.commonPool());
+	}
+	
+	/**
+	 * Creates cancellable a Task that represents the {@link ActiveCancellableTask} running on a different thread.
+	 * @param task The task to run on the executor thread
+	 * @param executor The {@link Executor} that determines the thread to run on
+	 * @return A {@link Task} object representing this task
+	 */
+	public static Task runnable(ActiveCancellableTask task, Executor executor) {
+		final BlockingTask<Void> t = new BlockingTask<>(new CompletableFuture<>(), true);
+		final TaskDriver<Void> d = new TaskDriver<>(t, task);
+		executor.execute(d);
+		return t.task;
+	}
+	
+	/**
+	 * Creates a Task that represents the {@link ActiveTaskOf} running on a different thread.
+	 * Will use the {@link ForkJoinPool#commonPool()} for execution.
+	 * @param <T> The result type of the task
+	 * @param task The task to run on the executor thread
+	 * @return A {@link TaskOf} object representing this task
+	 */
+	public static <T> TaskOf<T> runnable(ActiveTaskOf<T> task) {
+		return runnable(task, ForkJoinPool.commonPool());
+	}
+	
+	/**
+	 * Creates a Task that represents the {@link ActiveTaskOf} running on a different thread.
+	 * @param <T> The result type of the task
+	 * @param task The task to run on the executor thread
+	 * @param executor The {@link Executor} that determines the thread to run on
+	 * @return A {@link TaskOf} object representing this task
+	 */
+	public static <T> TaskOf<T> runnable(ActiveTaskOf<T> task, Executor executor) {
+		final BlockingTask<T> t = new BlockingTask<>(new CompletableFuture<>(), false);
+		final TaskDriver<T> d = new TaskDriver<>(t, task);
+		executor.execute(d);
+		return t.taskOf;
+	}
+	
+	/**
+	 * Creates a cancellable Task that represents the {@link ActiveCancellableTaskOf} running on a different thread.
+	 * Will use the {@link ForkJoinPool#commonPool()} for execution.
+	 * @param <T> The result type of the task
+	 * @param task The task to run on the executor thread
+	 * @return A {@link TaskOf} object representing this task
+	 */
+	public static <T> TaskOf<T> runnable(ActiveCancellableTaskOf<T> task) {
+		return runnable(task, ForkJoinPool.commonPool());
+	}
+	
+	/**
+	 * Creates cancellable a Task that represents the {@link ActiveCancellableTaskOf} running on a different thread.
+	 * @param <T> The result type of the task
+	 * @param task The task to run on the executor thread
+	 * @param executor The {@link Executor} that determines the thread to run on
+	 * @return A {@link TaskOf} object representing this task
+	 */
+	public static <T> TaskOf<T> runnable(ActiveCancellableTaskOf<T> task, Executor executor) {
+		final BlockingTask<T> t = new BlockingTask<>(new CompletableFuture<>(), true);
+		final TaskDriver<T> d = new TaskDriver<>(t, task);
+		executor.execute(d);
+		return t.taskOf;
+	}
 }

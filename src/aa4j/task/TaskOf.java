@@ -256,7 +256,7 @@ public interface TaskOf<T> {
 	 * @throws CancellationException When the task was cancelled
 	 * @throws IllegalStateException When the task is not done
 	 */
-	public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs) throws CancellationException, IllegalStateException;
+	public T getResult(Function<? super Exception, ? extends RuntimeException> remainingExs) throws CancellationException, IllegalStateException;
 	/**
 	 * Gets the result of this task and expect one type of (checked) exception to possibly be thrown by the
 	 * associated action.<br> 
@@ -272,8 +272,8 @@ public interface TaskOf<T> {
 	 * @throws CancellationException When the task was cancelled
 	 * @throws IllegalStateException When the task is not done
 	 */
-	public <E1 extends Throwable> T getResult(Class<E1> ex1,
-			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, CancellationException, IllegalStateException;
+	public <E1 extends Exception> T getResult(Class<E1> ex1,
+			Function<? super Exception, ? extends RuntimeException> remainingExs) throws E1, CancellationException, IllegalStateException;
 	/**
 	 * Gets the result of this task and expect two types of (checked) exceptions to possibly be thrown by the
 	 * associated action.<br> 
@@ -292,8 +292,8 @@ public interface TaskOf<T> {
 	 * @throws CancellationException When the task was cancelled
 	 * @throws IllegalStateException When the task is not done
 	 */
-	public <E1 extends Throwable, E2 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2,
-			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, E2, CancellationException, IllegalStateException;
+	public <E1 extends Exception, E2 extends Exception> T getResult(Class<E1> ex1, Class<E2> ex2,
+			Function<? super Exception, ? extends RuntimeException> remainingExs) throws E1, E2, CancellationException, IllegalStateException;
 	/**
 	 * Gets the result of this task and expect three types of (checked) exceptions to possibly be thrown by the
 	 * associated action.<br> 
@@ -315,8 +315,8 @@ public interface TaskOf<T> {
 	 * @throws CancellationException When the task was cancelled
 	 * @throws IllegalStateException When the task is not done
 	 */
-	public <E1 extends Throwable, E2 extends Throwable, E3 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2, Class<E3> ex3,
-			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, E2, E3, CancellationException, IllegalStateException;
+	public <E1 extends Exception, E2 extends Exception, E3 extends Exception> T getResult(Class<E1> ex1, Class<E2> ex2, Class<E3> ex3,
+			Function<? super Exception, ? extends RuntimeException> remainingExs) throws E1, E2, E3, CancellationException, IllegalStateException;
 	
 	//Future-Like access
 	/**
@@ -375,7 +375,7 @@ public interface TaskOf<T> {
 	 * @return {@code this}
 	 * @see #whenFailedAsync(Consumer)
 	 */
-	public TaskOf<T> whenFailed(Consumer<? super Throwable> action);
+	public TaskOf<T> whenFailed(Consumer<? super Exception> action);
 	/**
 	 * Registers an action to be executed when the task is cancelled.<br>
 	 * The action will run on the thread that cancels the task.
@@ -410,7 +410,7 @@ public interface TaskOf<T> {
 	 * @return {@code this}
 	 * @see #whenFailed(Consumer)
 	 */
-	public TaskOf<T> whenFailedAsync(Consumer<? super Throwable> action);
+	public TaskOf<T> whenFailedAsync(Consumer<? super Exception> action);
 	/**
 	 * Registers an action to be executed when the task is cancelled.<br>
 	 * The action will run on an asynchronous executor and not block the thread that cancels the task.

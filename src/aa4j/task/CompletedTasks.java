@@ -23,7 +23,7 @@ import aa4j.AA4JStatic;
 		return new AnyResult<T>(value, null, TaskState.SUCCEEDED, false);
 	}
 	
-	static <T> TaskOf<T> failure(Throwable exception) {
+	static <T> TaskOf<T> failure(Exception exception) {
 		return new AnyResult<T>(null, exception, TaskState.FAILED, false);
 	}
 	
@@ -41,7 +41,7 @@ import aa4j.AA4JStatic;
 		private final FutureView<T> view2;
 		
 		//We cant do constrcutors with T, CancellationException, Throwable b/c T might be one of those
-		private AnyResult(T cmpValue, Throwable altValue, TaskState desiredState, boolean appearCancellable) {
+		private AnyResult(T cmpValue, Exception altValue, TaskState desiredState, boolean appearCancellable) {
 			if(desiredState == TaskState.SUCCEEDED) {
 				this.value = cmpValue;
 				this.doneCpf = CompletableFuture.completedFuture(cmpValue);
@@ -55,7 +55,7 @@ import aa4j.AA4JStatic;
 				}
 			} else if(desiredState == TaskState.FAILED) {
 				Objects.requireNonNull(altValue, "'altValue' parameter must not be null");
-				final Throwable av2;
+				final Exception av2;
 				if(altValue instanceof CancellationException) {
 					//We need to wrap
 					av2 = new ExecutionException("Need to wrap CancellationException to fail future", altValue);
@@ -161,7 +161,7 @@ import aa4j.AA4JStatic;
 			if(state.isCancelled()) {
 				throw (CancellationException) value;
 			} else if(state.isFailed()) {
-				throw new ExecutionException((Throwable) value);
+				throw new ExecutionException((Exception) value);
 			} else {
 				return (T) value;
 			}
@@ -191,12 +191,12 @@ import aa4j.AA4JStatic;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public T getResult(Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws CancellationException, IllegalStateException {
 			if(state.isSuccess()) {
 				return (T) value;
 			} else if(state.isFailed()) {
-				throw remainingExs.apply((Throwable) value);
+				throw remainingExs.apply((Exception) value);
 			} else { //Cancelled
 				throw (CancellationException) value;
 			}
@@ -204,8 +204,8 @@ import aa4j.AA4JStatic;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E1 extends Throwable> T getResult(Class<E1> ex1,
-				Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public <E1 extends Exception> T getResult(Class<E1> ex1,
+				Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws E1, CancellationException, IllegalStateException {
 			if(state.isSuccess()) {
 				return (T) value;
@@ -214,7 +214,7 @@ import aa4j.AA4JStatic;
 				if(ex1.isInstance(value)) {
 					throw (E1) value;
 				} else {
-					throw remainingExs.apply((Throwable) value);
+					throw remainingExs.apply((Exception) value);
 				}
 			} else { //Cancelled
 				throw (CancellationException) value;
@@ -223,8 +223,8 @@ import aa4j.AA4JStatic;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E1 extends Throwable, E2 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2,
-				Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public <E1 extends Exception, E2 extends Exception> T getResult(Class<E1> ex1, Class<E2> ex2,
+				Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws E1, E2, CancellationException, IllegalStateException {
 			if(state.isSuccess()) {
 				return (T) value;
@@ -235,7 +235,7 @@ import aa4j.AA4JStatic;
 				} else if(ex2.isInstance(value)) {
 					throw (E2) value;
 				} else {
-					throw remainingExs.apply((Throwable) value);
+					throw remainingExs.apply((Exception) value);
 				}
 			} else { //Cancelled
 				throw (CancellationException) value;
@@ -244,8 +244,8 @@ import aa4j.AA4JStatic;
 
 		@Override
 		@SuppressWarnings("unchecked")
-		public <E1 extends Throwable, E2 extends Throwable, E3 extends Throwable> T getResult(Class<E1> ex1,
-				Class<E2> ex2, Class<E3> ex3, Function<? super Throwable, ? extends RuntimeException> remainingExs)
+		public <E1 extends Exception, E2 extends Exception, E3 extends Exception> T getResult(Class<E1> ex1,
+				Class<E2> ex2, Class<E3> ex3, Function<? super Exception, ? extends RuntimeException> remainingExs)
 				throws E1, E2, E3, CancellationException, IllegalStateException {
 			if(state.isSuccess()) {
 				return (T) value;
@@ -258,7 +258,7 @@ import aa4j.AA4JStatic;
 				} else if(ex3.isInstance(value)) {
 					throw (E3) value;
 				} else {
-					throw remainingExs.apply((Throwable) value);
+					throw remainingExs.apply((Exception) value);
 				}
 			} else { //Cancelled
 				throw (CancellationException) value;
@@ -296,9 +296,9 @@ import aa4j.AA4JStatic;
 		}
 
 		@Override
-		public TaskOf<T> whenFailed(Consumer<? super Throwable> action) {
+		public TaskOf<T> whenFailed(Consumer<? super Exception> action) {
 			if(state.isFailed()) {
-				action.accept((Throwable) value);
+				action.accept((Exception) value);
 			}
 			return this;
 		}
@@ -328,9 +328,9 @@ import aa4j.AA4JStatic;
 		}
 
 		@Override
-		public TaskOf<T> whenFailedAsync(Consumer<? super Throwable> action) {
+		public TaskOf<T> whenFailedAsync(Consumer<? super Exception> action) {
 			if(state.isFailed()) {
-				ForkJoinPool.commonPool().submit(() -> action.accept((Throwable) value));
+				ForkJoinPool.commonPool().submit(() -> action.accept((Exception) value));
 			}
 			return this;
 		}
@@ -471,7 +471,7 @@ import aa4j.AA4JStatic;
 		}
 
 		@Override
-		public Task whenFailed(Consumer<? super Throwable> action) {
+		public Task whenFailed(Consumer<? super Exception> action) {
 			taskOf.whenFailed(action);
 			return this;
 		}
@@ -495,7 +495,7 @@ import aa4j.AA4JStatic;
 		}
 
 		@Override
-		public Task whenFailedAsync(Consumer<? super Throwable> action) {
+		public Task whenFailedAsync(Consumer<? super Exception> action) {
 			taskOf.whenFailedAsync(action);
 			return this;
 		}
