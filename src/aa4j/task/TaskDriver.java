@@ -11,8 +11,8 @@ import aa4j.function.ActiveTaskOf;
  */
 class TaskDriver<T> implements Runnable {
 	
-	private final BlockingTask<T> task; 
-	private final ActiveCancellableTaskOf<T> act;
+	protected final BlockingTask<T> task; 
+	protected final ActiveCancellableTaskOf<T> act;
 	
 	public TaskDriver(BlockingTask<T> task, ActiveCancellableTaskOf<T> act) {
 		this.task = task;
@@ -49,7 +49,10 @@ class TaskDriver<T> implements Runnable {
 		} catch (Exception e) {
 			if(!task.failImpl(e)) //It's like a unit test, but in production code
 				throw new IllegalStateException("Cannot fail BlockingTask: already completed with " + task.getStateImpl());
+		} finally {
+			postTaskDone(task.getStateImpl()); //Can be overridden for extra behavior when a task finishes
 		}
 	}
 
+	protected void postTaskDone(TaskState state) {}
 }

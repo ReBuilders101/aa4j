@@ -530,7 +530,7 @@ import aa4j.Awaiter;
 
 		@Override
 		public boolean cancel(boolean mayInterruptIfRunning) {
-			return mayInterruptIfRunning ? cancelImpl()  == CancelResult.SUCCESSFULLY_CANCELLED : false;
+			return mayInterruptIfRunning ? cancelImpl().isCancelledByAction() : false;
 		}
 
 		@Override

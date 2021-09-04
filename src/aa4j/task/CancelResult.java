@@ -13,39 +13,41 @@ public enum CancelResult {
 	 * and that it might take some time after this result is returned until all asynchronous
 	 * actions associated with this task have stopped.
 	 */
-	SUCCESSFULLY_CANCELLED(true),
+	SUCCESSFULLY_CANCELLED(true, true),
 	/**
 	 * The cancellation attempt was unsuccessful because
 	 * either the task cannot be cancelled at all, or because the
 	 * task was already running and cannot be cancelled while running.
 	 */
-	UNABLE_TO_CANCEL(false),
+	UNABLE_TO_CANCEL(false, false),
 	/**
 	 * Cancellation of the task was possible and requested,
 	 * and the tasks state will switch to cancelled when the cancellation
 	 * was confirmed, or to failed/succeeded if one of those happens first
 	 */
-	CANCELLATION_PENDING(false),
+	CANCELLATION_PENDING(false, true),
 	/**
 	 * Cancellation of the task is no longer possible
 	 * because it was already cancelled.
 	 */
-	ALREADY_CANCELLED(true),
+	ALREADY_CANCELLED(true, false),
 	/**
 	 * Cancellation of the task is no longer possible
 	 * because it has already successfully completed.
 	 */
-	ALREADY_SUCCEEDED(true),
+	ALREADY_SUCCEEDED(true, false),
 	/**
 	 * Cancellation of the task is no longer possible
 	 * beacuse it has already failed with an exception.
 	 */
-	ALREADY_FAILED(true);
+	ALREADY_FAILED(true, false);
 	
 	private final boolean stopped;
+	private final boolean cancelled;
 	
-	private CancelResult(boolean stopped) {
+	private CancelResult(boolean stopped, boolean cancelled) {
 		this.stopped = stopped;
+		this.cancelled = cancelled;
 	}
 	
 	/**
@@ -61,4 +63,13 @@ public enum CancelResult {
 		return stopped;
 	}
 	
+	/**
+	 * If {@code true}, the method call that returned this result either caused a cancellation
+	 * of the task or at least notified the task that cancellation was requested.
+	 * @return {@code true} if the call resulted in an (attempted) cancellation
+	 * {@code false} if cancellation was impossible or the task was already stopped
+	 */
+	public boolean isCancelledByAction() {
+		return cancelled;
+	}
 }

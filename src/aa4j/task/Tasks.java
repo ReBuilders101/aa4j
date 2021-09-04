@@ -3,10 +3,13 @@ package aa4j.task;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import aa4j.AA4JStatic;
+import aa4j.TaskExecutorService;
 import aa4j.function.ActiveCancellableTask;
 import aa4j.function.ActiveCancellableTaskOf;
 import aa4j.function.ActiveTask;
@@ -25,7 +28,7 @@ public final class Tasks {
 	 * @return A {@link TaskAccess} containing all representations of the task
 	 */
 	public static <T> TaskAccess<T> manualBlocking() {
-		return new NonBlockingTask<>(new CompletableFuture<>(), null);
+		return new NonBlockingTask<>(newCpf(), null);
 	}
 	
 	/**
@@ -39,7 +42,7 @@ public final class Tasks {
 	 */
 	public static <T> TaskAccess<T> manualBlocking(Runnable cancellationHandler) {
 		Objects.requireNonNull(cancellationHandler, "'cancellationHandler' parameter must not be null");
-		return new NonBlockingTask<>(new CompletableFuture<>(), cancellationHandler);
+		return new NonBlockingTask<>(newCpf(), cancellationHandler);
 	}
 	
 	/**
@@ -51,7 +54,7 @@ public final class Tasks {
 	public static Task delay(long time, TimeUnit unit) {
 		if(time < 0) throw new IllegalArgumentException("time cannot be negative");
 		Objects.requireNonNull(unit, "'unit' parameter must not be null");
-		return new NonBlockingTask<>(new CompletableFuture<>().completeOnTimeout(null, time, unit), null).task();
+		return new NonBlockingTask<>(newCpf().completeOnTimeout(null, time, unit), null).task();
 	}
 	
 	/**
@@ -63,7 +66,7 @@ public final class Tasks {
 	public static Task delayCancellable(long time, TimeUnit unit) {
 		if(time < 0) throw new IllegalArgumentException("time cannot be negative");
 		Objects.requireNonNull(unit, "'unit' parameter must not be null");
-		return new NonBlockingTask<>(new CompletableFuture<>().completeOnTimeout(null, time, unit), AA4JStatic.NOOP).task();
+		return new NonBlockingTask<>(newCpf().completeOnTimeout(null, time, unit), AA4JStatic.NOOP).task();
 	}
 	
 	/**
@@ -135,7 +138,7 @@ public final class Tasks {
 	 * @return A {@link Task} object representing this task
 	 */
 	public static Task runnable(ActiveTask task) {
-		return runnable(task, ForkJoinPool.commonPool());
+		return runnable(task, defaultExecutor());
 	}
 	
 	/**
@@ -145,8 +148,8 @@ public final class Tasks {
 	 * @return A {@link Task} object representing this task
 	 */
 	public static Task runnable(ActiveTask task, Executor executor) {
-		final BlockingTask<Void> t = new BlockingTask<>(new CompletableFuture<>(), false);
-		final TaskDriver<Void> d = new TaskDriver<>(t, task);
+		final BlockingTask<?> t = new BlockingTask<>(newCpf(), false);
+		final TaskDriver<?> d = new TaskDriver<>(t, task);
 		executor.execute(d);
 		return t.task;
 	}
@@ -158,7 +161,7 @@ public final class Tasks {
 	 * @return A {@link Task} object representing this task
 	 */
 	public static Task runnable(ActiveCancellableTask task) {
-		return runnable(task, ForkJoinPool.commonPool());
+		return runnable(task, defaultExecutor());
 	}
 	
 	/**
@@ -168,8 +171,8 @@ public final class Tasks {
 	 * @return A {@link Task} object representing this task
 	 */
 	public static Task runnable(ActiveCancellableTask task, Executor executor) {
-		final BlockingTask<Void> t = new BlockingTask<>(new CompletableFuture<>(), true);
-		final TaskDriver<Void> d = new TaskDriver<>(t, task);
+		final BlockingTask<?> t = new BlockingTask<>(newCpf(), true);
+		final TaskDriver<?> d = new TaskDriver<>(t, task);
 		executor.execute(d);
 		return t.task;
 	}
@@ -182,7 +185,7 @@ public final class Tasks {
 	 * @return A {@link TaskOf} object representing this task
 	 */
 	public static <T> TaskOf<T> runnable(ActiveTaskOf<T> task) {
-		return runnable(task, ForkJoinPool.commonPool());
+		return runnable(task, defaultExecutor());
 	}
 	
 	/**
@@ -193,7 +196,7 @@ public final class Tasks {
 	 * @return A {@link TaskOf} object representing this task
 	 */
 	public static <T> TaskOf<T> runnable(ActiveTaskOf<T> task, Executor executor) {
-		final BlockingTask<T> t = new BlockingTask<>(new CompletableFuture<>(), false);
+		final BlockingTask<T> t = new BlockingTask<>(newCpf(), false);
 		final TaskDriver<T> d = new TaskDriver<>(t, task);
 		executor.execute(d);
 		return t.taskOf;
@@ -207,7 +210,7 @@ public final class Tasks {
 	 * @return A {@link TaskOf} object representing this task
 	 */
 	public static <T> TaskOf<T> runnable(ActiveCancellableTaskOf<T> task) {
-		return runnable(task, ForkJoinPool.commonPool());
+		return runnable(task, defaultExecutor());
 	}
 	
 	/**
@@ -218,9 +221,68 @@ public final class Tasks {
 	 * @return A {@link TaskOf} object representing this task
 	 */
 	public static <T> TaskOf<T> runnable(ActiveCancellableTaskOf<T> task, Executor executor) {
-		final BlockingTask<T> t = new BlockingTask<>(new CompletableFuture<>(), true);
+		final BlockingTask<T> t = new BlockingTask<>(newCpf(), true);
 		final TaskDriver<T> d = new TaskDriver<>(t, task);
 		executor.execute(d);
 		return t.taskOf;
 	}
+	
+	/**
+	 * Creates a new task executor that uses the threads provided by the
+	 * delegate Executor
+	 * @param delegateExecutor An {@link ExecutorService} that manages the threads used for task execution
+	 * @return A {@link TaskExecutorService} for that executor
+	 */
+	public static TaskExecutorService taskExecutor(ExecutorService delegateExecutor) {
+		return new WrappingTaskExecutor(delegateExecutor);
+	}
+	
+	/**
+	 * Creates a new task executor that uses the threads provided by the
+	 * default executor service available through {@link #defaultExecutor()}.
+	 * @return A {@link TaskExecutorService} for the default executor
+	 */
+	public static TaskExecutorService taskExecutor() {
+		return taskExecutor(defaultExecutor());
+	}
+	
+	
+	private static volatile Supplier<ExecutorService> defaultExecutor = null;
+	
+	/**
+	 * The default {@link ExecutorService} used to execute asynchronous tasks
+	 * when no other executor is given. Defaults to {@link ForkJoinPool#commonPool()},
+	 * but can be changed through {@link #setDefaultExecutor(Supplier)}.
+	 * @return The default executor service
+	 */
+	public static ExecutorService defaultExecutor() {
+		var excsup = defaultExecutor;
+		ExecutorService exc;
+		if(excsup == null || (exc = excsup.get()) == null) {
+			return ForkJoinPool.commonPool();
+		} else {
+			return exc;
+		}
+	}
+	
+	/**
+	 * Changes the default {@link ExecutorService} used for task execution. <br>
+	 * If {@code serviceSupplier} is {@code null} or returns {@code null} when
+	 * called, the {@link ForkJoinPool#commonPool()} will be used as a fallback.
+	 * <p>
+	 * If a security manager is present, this operation requires a {@link RuntimePermission}
+	 * with name {@code "aa4j.setDefaultExecutor"}.
+	 * </p>
+	 * @param serviceSupplier A supplier producing the executor to use, or {@code null} to reset to default
+	 */
+	public static void setDefaultExecutor(Supplier<ExecutorService> serviceSupplier) {
+		new RuntimePermission("aa4j.setDefaultExecutor").checkGuard(null);
+		defaultExecutor = serviceSupplier;
+	}
+	
+	
+	private static <T> CompletableFuture<T> newCpf() {
+		return new CompletableFuture<>(); //can change this to use special implementation for everything
+	}
+	
 }
