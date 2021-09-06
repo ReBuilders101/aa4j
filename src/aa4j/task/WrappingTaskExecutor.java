@@ -28,7 +28,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 	
 	public WrappingTaskExecutor(ExecutorService delegateExecutor) {
 		delegate = Objects.requireNonNull(delegateExecutor, "'delegateExecutor' parameter must not be null");
-		awt = Tasks.manualBlocking();
+		awt = Tasks.create();
 		tcts = Collections.synchronizedList(new LinkedList<>());
 		threadStarted = new AtomicBoolean(false);
 	}
@@ -90,7 +90,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 		if(delegate.isShutdown()) throw new RejectedExecutionException("Delegate ExecutorService is shut down");
 		
 		final BlockingTask<Void> t = new BlockingTask<>(new CompletableFuture<>(), false);
-		final CancellationToken tct = t.newToken();
+		final CancellationToken tct = t.token();
 		final TaskDriver<?> d = new TaskDriver<Void>(t, task) {
 			@Override 
 			protected void postTaskDone(TaskState state) {
@@ -107,7 +107,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 			tcts.remove(tct);
 			throw e;
 		}
-		return t.task;
+		return t.taskView;
 	}
 
 	@Override
@@ -115,7 +115,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 		if(delegate.isShutdown()) throw new RejectedExecutionException("Delegate ExecutorService is shut down");
 		
 		final BlockingTask<Void> t = new BlockingTask<>(new CompletableFuture<>(), false);
-		final CancellationToken tct = t.newToken();
+		final CancellationToken tct = t.token();
 		final TaskDriver<?> d = new TaskDriver<Void>(t, task) {
 			@Override 
 			protected void postTaskDone(TaskState state) {
@@ -132,7 +132,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 			tcts.remove(tct);
 			throw e;
 		}
-		return t.task;
+		return t.taskView;
 	}
 
 	@Override
@@ -140,7 +140,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 		if(delegate.isShutdown()) throw new RejectedExecutionException("Delegate ExecutorService is shut down");
 		
 		final BlockingTask<T> t = new BlockingTask<>(new CompletableFuture<>(), false);
-		final CancellationToken tct = t.newToken();
+		final CancellationToken tct = t.token();
 		final TaskDriver<T> d = new TaskDriver<T>(t, task) {
 			@Override 
 			protected void postTaskDone(TaskState state) {
@@ -157,7 +157,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 			tcts.remove(tct);
 			throw e;
 		}
-		return t.taskOf;
+		return t.taskOfView;
 	}
 
 	@Override
@@ -165,7 +165,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 		if(delegate.isShutdown()) throw new RejectedExecutionException("Delegate ExecutorService is shut down");
 		
 		final BlockingTask<T> t = new BlockingTask<>(new CompletableFuture<>(), false);
-		final CancellationToken tct = t.newToken();
+		final CancellationToken tct = t.token();
 		final TaskDriver<T> d = new TaskDriver<T>(t, task) {
 			@Override 
 			protected void postTaskDone(TaskState state) {
@@ -182,7 +182,7 @@ class WrappingTaskExecutor implements TaskExecutorService {
 			tcts.remove(tct);
 			throw e;
 		}
-		return t.taskOf;
+		return t.taskOfView;
 	}
 
 	@Override

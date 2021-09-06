@@ -8,7 +8,7 @@ import aa4j.CancellationStatusSupplier;
  * Task associated with an action blocking another thread
  * @param <T> Type of task result
  */
-/*package*/ final class BlockingTask<T> extends AbstractCompletableFutureTask<T> implements CancellationStatusSupplier {
+/*package*/ final class BlockingTask<T> extends AbstractCompletionStageTask<T> implements CancellationStatusSupplier {
 
 	private volatile boolean cancellationRequested;
 	
@@ -21,7 +21,7 @@ import aa4j.CancellationStatusSupplier;
 	protected CancelResult cancelImpl() {
 		if(getStateImpl().isDone()) return fromDoneState();
 		
-		if(isCancellableWhileRunning) {
+		if(isCancellable) {
 			cancellationRequested = true;
 			return CancelResult.CANCELLATION_PENDING;
 		} else {
@@ -29,9 +29,23 @@ import aa4j.CancellationStatusSupplier;
 		}
 	}
 	
+	protected boolean succeedImpl(T value) {
+		return stage.complete(value);
+	}
+	
+	protected boolean failImpl(Throwable ex) {
+		return stage.completeExceptionally(wrapFailureReason(ex));
+	}
+	
+	protected CancellationToken token() {
+		var t = CancellationToken.unbound();
+		t.assignAction(() -> cancelImpl(), null);
+		return t;
+	}
+	
 	protected boolean confirmCancelImpl() {
 		if(cancellationRequested) {
-			return cpf.completeExceptionally(new CancellationException());
+			return stage.completeExceptionally(new CancellationException());
 		} else {
 			throw new IllegalStateException("Cannot confirm cancellation: not requested");
 		}
@@ -40,23 +54,5 @@ import aa4j.CancellationStatusSupplier;
 	@Override
 	public boolean isCancellationRequested() {
 		return cancellationRequested;
-	}
-
-	@Override
-	public TaskCompletionSourceOf<T> tcsOf() {
-		throw new UnsupportedOperationException("BlockingTasks cannot be completed with TCS objects");
-	}
-
-	@Override
-	public TaskCompletionSource tcs() {
-		throw new UnsupportedOperationException("BlockingTasks cannot be completed with TCS objects");
-	}
-	
-	private CancelResult fromDoneState() {
-		var state = getStateImpl();
-		if(!state.isDone()) throw new IllegalStateException("State is not done");
-		if(state.isSuccess()) return CancelResult.ALREADY_SUCCEEDED;
-		if(state.isFailed()) return CancelResult.ALREADY_FAILED;
-		return CancelResult.ALREADY_CANCELLED;
 	}
 }

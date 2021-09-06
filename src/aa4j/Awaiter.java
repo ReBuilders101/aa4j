@@ -156,6 +156,7 @@ public final class Awaiter {
 	 * @throws NullPointerException When {@code unit} is {@code null}
 	 */
 	public Object awaitUninterruptibly(Object permit, long timeout, TimeUnit unit) throws TimeoutException {
+		Objects.requireNonNull(unit, "'unit' parameter must not be null");
 		
 		if(availablePermits.contains(MASTER_PERMIT)) {
 			return MASTER_PERMIT;

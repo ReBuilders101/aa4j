@@ -276,7 +276,7 @@ public interface Task {
 	 * @return {@code this}
 	 * @see #whenFailedAsync(Consumer)
 	 */
-	public Task whenFailed(Consumer<? super Exception> action);
+	public Task whenFailed(Consumer<? super Throwable> action);
 	/**
 	 * Registers an action to be executed when the task is cancelled.<br>
 	 * The action will run on the thread that cancels the task.
@@ -310,7 +310,7 @@ public interface Task {
 	 * @return {@code this}
 	 * @see #whenFailed(Consumer)
 	 */
-	public Task whenFailedAsync(Consumer<? super Exception> action);
+	public Task whenFailedAsync(Consumer<? super Throwable> action);
 	/**
 	 * Registers an action to be executed when the task is cancelled.<br>
 	 * The action will run on an asynchronous executor and not block the thread that cancels the task.

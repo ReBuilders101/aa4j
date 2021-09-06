@@ -16,7 +16,7 @@ public interface TaskCompletionSource {
 	 * @return {@code true} if the call caused the task to fail, {@code false}
 	 * if the task was already done when this method was called
 	 */
-	public boolean fail(Exception exception);
+	public boolean fail(Throwable exception);
 	/**
 	 * The task that will be completed by this completer.
 	 * @return The task for this completer

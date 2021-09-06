@@ -6,6 +6,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import aa4j.AA4JStatic;
@@ -27,6 +28,17 @@ public final class Tasks {
 	 * @param <T> The result type of the task
 	 * @return A {@link TaskAccess} containing all representations of the task
 	 */
+	public static <T> TaskAccess<T> create() {
+		return new NonBlockingTask<>(newCpf(), null);
+	}
+	
+	/**
+	 * A completely configurable task that represents some internal time-consuming action
+	 * (such as connecting a socket). Cannot be cancelled.
+	 * @param <T> The result type of the task
+	 * @return A {@link TaskAccess} containing all representations of the task
+	 */
+	@Deprecated
 	public static <T> TaskAccess<T> manualBlocking() {
 		return new NonBlockingTask<>(newCpf(), null);
 	}
@@ -40,6 +52,7 @@ public final class Tasks {
 	 * @return A {@link TaskAccess} containing all representations of the task
 	 * @throws NullPointerException When {@code cancellationHandler} is {@code null}
 	 */
+	@Deprecated
 	public static <T> TaskAccess<T> manualBlocking(Runnable cancellationHandler) {
 		Objects.requireNonNull(cancellationHandler, "'cancellationHandler' parameter must not be null");
 		return new NonBlockingTask<>(newCpf(), cancellationHandler);
@@ -75,7 +88,7 @@ public final class Tasks {
 	 * @return A completed task
 	 */
 	public static Task completed() {
-		return CompletedTasks.success_untyped;
+		return CompletedTask.success_untyped;
 	}
 	
 	/**
@@ -85,7 +98,7 @@ public final class Tasks {
 	 * @return A task that is successfully completed with the given value
 	 */
 	public static <T> TaskOf<T> success(T value) {
-		return CompletedTasks.success(value);
+		return new CompletedTask<>(value, null, TaskState.SUCCEEDED, false).taskOfView;
 	}
 	
 	/**
@@ -95,18 +108,7 @@ public final class Tasks {
 	 * @return A task that has failed with an exception
 	 */
 	public static <T> TaskOf<T> failure(Exception failureReason) {
-		return CompletedTasks.failure(failureReason);
-	}
-	
-	/**
-	 * A task that has failed with a exception.
-	 * @param <T> The type of the task result
-	 * @param failureReason The exception that caused the task to fail
-	 * @param resultType The type of the task result
-	 * @return A task that has failed with an exception
-	 */
-	public static <T> TaskOf<T> failure(Exception failureReason, Class<T> resultType) {
-		return CompletedTasks.failure(failureReason);
+		return new CompletedTask<>((T) null, Objects.requireNonNull(failureReason), TaskState.FAILED, false).taskOfView;
 	}
 	
 	/**
@@ -115,19 +117,8 @@ public final class Tasks {
 	 * @return A task that has been cancelled
 	 */
 	public static <T> TaskOf<T> cancelled() {
-		return CompletedTasks.cancelled();
+		return new CompletedTask<>((T) null, null, TaskState.CANCELLED, false).taskOfView;
 	}
-	
-	/**
-	 * A task that is cancelled.
-	 * @param <T> The type of the task result
-	 * @param resultType The type of the task result
-	 * @return A task that has been cancelled
-	 */
-	public static <T> TaskOf<T> cancelled(Class<T> resultType) {
-		return CompletedTasks.cancelled();
-	}
-	
 	
 	
 	
@@ -151,7 +142,7 @@ public final class Tasks {
 		final BlockingTask<?> t = new BlockingTask<>(newCpf(), false);
 		final TaskDriver<?> d = new TaskDriver<>(t, task);
 		executor.execute(d);
-		return t.task;
+		return t.taskView;
 	}
 	
 	/**
@@ -174,7 +165,7 @@ public final class Tasks {
 		final BlockingTask<?> t = new BlockingTask<>(newCpf(), true);
 		final TaskDriver<?> d = new TaskDriver<>(t, task);
 		executor.execute(d);
-		return t.task;
+		return t.taskView;
 	}
 	
 	/**
@@ -199,7 +190,7 @@ public final class Tasks {
 		final BlockingTask<T> t = new BlockingTask<>(newCpf(), false);
 		final TaskDriver<T> d = new TaskDriver<>(t, task);
 		executor.execute(d);
-		return t.taskOf;
+		return t.taskOfView;
 	}
 	
 	/**
@@ -224,7 +215,31 @@ public final class Tasks {
 		final BlockingTask<T> t = new BlockingTask<>(newCpf(), true);
 		final TaskDriver<T> d = new TaskDriver<>(t, task);
 		executor.execute(d);
-		return t.taskOf;
+		return t.taskOfView;
+	}
+	
+	
+	
+	
+	
+	public static <T,R> TaskOf<R> map(TaskOf<T> task, Function<T, R> mapFunc) {
+		Objects.requireNonNull(task, "'task' parameter must not be null");
+		Objects.requireNonNull(mapFunc, "'mapFunc' parameter must not be null");
+		var stage = (CompletableFuture<T>) task.stage(); //Just assume that it is a subclass of CPF, otherwise it will not work
+		return new MappedTask<>(stage.thenApply(mapFunc), task::cancel, task.isCancellable()).taskOfView;
+	}
+	
+	@Deprecated //TODO cancellation is no good
+	public static <T,R> TaskOf<R> chain(TaskOf<T> task, Function<T, TaskOf<R>> chainedTask) {
+		Objects.requireNonNull(task, "'task' parameter must not be null");
+		Objects.requireNonNull(chainedTask, "'chainedTask' parameter must not be null");
+		var stage = (CompletableFuture<T>) task.stage();
+		return new MappedTask<>(stage.thenCompose(t -> chainedTask.apply(t).stage()),
+				task::cancel, task.isCancellable()).taskOfView;
+	}
+	
+	public static <T> TaskOf<T> withResult(Task task, Supplier<T> resultWhenComplete) {
+		return map(task.taskOf(), _null -> resultWhenComplete.get());
 	}
 	
 	/**
@@ -282,7 +297,31 @@ public final class Tasks {
 	
 	
 	private static <T> CompletableFuture<T> newCpf() {
-		return new CompletableFuture<>(); //can change this to use special implementation for everything
+		return new UnobtrudableCompletableFuture<>(); //can change this to use special implementation for everything
 	}
 	
+	private static final class UnobtrudableCompletableFuture<T> extends CompletableFuture<T> {
+
+		@Override
+		public CompletableFuture<T> toCompletableFuture() {
+			return this;
+		}
+
+		@Override
+		public void obtrudeValue(T value) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void obtrudeException(Throwable ex) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <U> CompletableFuture<U> newIncompleteFuture() {
+			return newCpf();
+		}
+		
+	}
+
 }
