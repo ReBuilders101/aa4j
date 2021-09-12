@@ -225,7 +225,7 @@ public final class Tasks {
 	public static <T,R> TaskOf<R> map(TaskOf<T> task, Function<T, R> mapFunc) {
 		Objects.requireNonNull(task, "'task' parameter must not be null");
 		Objects.requireNonNull(mapFunc, "'mapFunc' parameter must not be null");
-		var stage = (CompletableFuture<T>) task.stage(); //Just assume that it is a subclass of CPF, otherwise it will not work
+		var stage = task.stage().toCompletableFuture(); //Just assume that it is a subclass of CPF, otherwise it will not work
 		return new MappedTask<>(stage.thenApply(mapFunc), task::cancel, task.isCancellable()).taskOfView;
 	}
 	
@@ -233,7 +233,7 @@ public final class Tasks {
 	public static <T,R> TaskOf<R> chain(TaskOf<T> task, Function<T, TaskOf<R>> chainedTask) {
 		Objects.requireNonNull(task, "'task' parameter must not be null");
 		Objects.requireNonNull(chainedTask, "'chainedTask' parameter must not be null");
-		var stage = (CompletableFuture<T>) task.stage();
+		var stage = task.stage().toCompletableFuture();
 		return new MappedTask<>(stage.thenCompose(t -> chainedTask.apply(t).stage()),
 				task::cancel, task.isCancellable()).taskOfView;
 	}

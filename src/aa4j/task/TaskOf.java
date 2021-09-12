@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import aa4j.AA4JStatic;
+import aa4j.TaskNotDoneException;
 
 /**
  * An asynchronously executing Task that has a typed result.
@@ -225,9 +226,9 @@ public interface TaskOf<T> {
 	 * @throws ExecutionException When the task has failed with an exception. That exception is
 	 * available through {@link ExecutionException#getCause()}.
 	 * @throws CancellationException When the task was cancelled before completion
-	 * @throws IllegalStateException When the task is not done
+	 * @throws TaskNotDoneException When the task is not done
 	 */
-	public T getResult() throws ExecutionException, CancellationException, IllegalStateException;
+	public T getResult() throws ExecutionException, CancellationException, TaskNotDoneException;
 	/**
 	 * Gets the result of this task immediately, or returns an alternate value
 	 * when no result is available.
@@ -255,9 +256,9 @@ public interface TaskOf<T> {
 	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4JStatic#TO_UNCHECKED} is sufficient
 	 * @return The result of the task, if the task was successful
 	 * @throws CancellationException When the task was cancelled
-	 * @throws IllegalStateException When the task is not done
+	 * @throws TaskNotDoneException When the task is not done
 	 */
-	public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs) throws CancellationException, IllegalStateException;
+	public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs) throws CancellationException, TaskNotDoneException;
 	/**
 	 * Gets the result of this task and expect one type of (checked) exception to possibly be thrown by the
 	 * associated action.<br> 
@@ -271,10 +272,10 @@ public interface TaskOf<T> {
 	 * @return The result of the task, if the task was successful
 	 * @throws E1 The exception, if it is thrown by the associated action
 	 * @throws CancellationException When the task was cancelled
-	 * @throws IllegalStateException When the task is not done
+	 * @throws TaskNotDoneException When the task is not done
 	 */
 	public <E1 extends Throwable> T getResult(Class<E1> ex1,
-			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, CancellationException, IllegalStateException;
+			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, CancellationException, TaskNotDoneException;
 	/**
 	 * Gets the result of this task and expect two types of (checked) exceptions to possibly be thrown by the
 	 * associated action.<br> 
@@ -291,10 +292,10 @@ public interface TaskOf<T> {
 	 * @throws E1 The first exception, if it is thrown by the associated action
 	 * @throws E2 The second exception, if it is thrown by the associated action
 	 * @throws CancellationException When the task was cancelled
-	 * @throws IllegalStateException When the task is not done
+	 * @throws TaskNotDoneException When the task is not done
 	 */
 	public <E1 extends Throwable, E2 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2,
-			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, E2, CancellationException, IllegalStateException;
+			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, E2, CancellationException, TaskNotDoneException;
 	/**
 	 * Gets the result of this task and expect three types of (checked) exceptions to possibly be thrown by the
 	 * associated action.<br> 
@@ -314,10 +315,10 @@ public interface TaskOf<T> {
 	 * @throws E2 The second exception, if it is thrown by the associated action
 	 * @throws E3 The third exception, if it is thrown by the associated action
 	 * @throws CancellationException When the task was cancelled
-	 * @throws IllegalStateException When the task is not done
+	 * @throws TaskNotDoneException When the task is not done
 	 */
 	public <E1 extends Throwable, E2 extends Throwable, E3 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2, Class<E3> ex3,
-			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, E2, E3, CancellationException, IllegalStateException;
+			Function<? super Throwable, ? extends RuntimeException> remainingExs) throws E1, E2, E3, CancellationException, TaskNotDoneException;
 	
 	/**
 	 * The result of this task as an {@link Optional}.<br>

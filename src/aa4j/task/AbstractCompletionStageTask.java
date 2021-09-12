@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import aa4j.Awaiter;
+import aa4j.TaskNotDoneException;
 
 /**
  * Provides methods necessary for a {@link Task} and {@link TaskOf} that are backed by a completableFuture
@@ -366,7 +367,7 @@ import aa4j.Awaiter;
 			return isCancellable;
 		}
 
-		private T getResultIfComplete() throws CompletionException, CancellationException, IllegalStateException {
+		private T getResultIfComplete() throws CompletionException, CancellationException, TaskNotDoneException {
 			final Object sentinel = new Object(); //unique object only available in this scope
 			
 			//The one time I am thankful that java generics cast everything to Object anyways
@@ -374,14 +375,14 @@ import aa4j.Awaiter;
 			final var res = stage.getNow((T) sentinel);
 			
 			if(res == sentinel) {
-				throw new IllegalStateException("Task is not done");
+				throw new TaskNotDoneException();
 			} else {
 				return res;
 			}
 		}
 		
 		@Override
-		public T getResult() throws ExecutionException, CancellationException, IllegalStateException {
+		public T getResult() throws ExecutionException, CancellationException, TaskNotDoneException {
 			try {
 				return getResultIfComplete();
 			} catch (CompletionException ex) {
@@ -413,7 +414,7 @@ import aa4j.Awaiter;
 
 		@Override
 		public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws CancellationException, IllegalStateException {
+				throws CancellationException, TaskNotDoneException {
 			try {
 				return getResultIfComplete();
 			} catch (CompletionException e) {
@@ -426,7 +427,7 @@ import aa4j.Awaiter;
 		@SuppressWarnings("unchecked")
 		public <E1 extends Throwable> T getResult(Class<E1> ex1,
 				Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws E1, CancellationException, IllegalStateException {
+				throws E1, CancellationException, TaskNotDoneException {
 			try {
 				return getResultIfComplete();
 			} catch (CompletionException e) {
@@ -444,7 +445,7 @@ import aa4j.Awaiter;
 		@SuppressWarnings("unchecked")
 		public <E1 extends Throwable, E2 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2,
 				Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws E1, E2, CancellationException, IllegalStateException {
+				throws E1, E2, CancellationException, TaskNotDoneException {
 			try {
 				return getResultIfComplete();
 			} catch (CompletionException e) {
@@ -464,7 +465,7 @@ import aa4j.Awaiter;
 		@SuppressWarnings("unchecked")
 		public <E1 extends Throwable, E2 extends Throwable, E3 extends Throwable> T getResult(Class<E1> ex1,
 				Class<E2> ex2, Class<E3> ex3, Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws E1, E2, E3, CancellationException, IllegalStateException {
+				throws E1, E2, E3, CancellationException, TaskNotDoneException {
 			try {
 				return getResultIfComplete();
 			} catch (CompletionException e) {
@@ -486,7 +487,7 @@ import aa4j.Awaiter;
 		public Optional<T> getResultIfSuccess() {
 			try {
 				return Optional.ofNullable(getResultIfComplete());
-			} catch (CompletionException | IllegalStateException /*Includes CancellationException*/ e) {
+			} catch (CompletionException | CancellationException | TaskNotDoneException e) {
 				return Optional.empty();
 			}
 		}
@@ -495,8 +496,7 @@ import aa4j.Awaiter;
 		public Optional<T> getResultIfPresent() throws ExecutionException, CancellationException {
 			try {
 				return Optional.ofNullable(getResult());
-			} catch (IllegalStateException e) {
-				if(e instanceof CancellationException) throw e; //TODO fix when IncompleteException exists
+			} catch (TaskNotDoneException e) {
 				return Optional.empty();
 			}
 		}

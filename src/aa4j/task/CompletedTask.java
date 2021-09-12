@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import aa4j.AA4JStatic;
+import aa4j.TaskNotDoneException;
 
 /*package*/ final class CompletedTask<T> {
 	
@@ -158,7 +159,7 @@ import aa4j.AA4JStatic;
 		}
 
 		@Override
-		public T getResult() throws ExecutionException, CancellationException, IllegalStateException {
+		public T getResult() throws ExecutionException, CancellationException, TaskNotDoneException {
 			if(state.isCancelled()) {
 				throw unwrapCancellationReason();
 			} else if(state.isFailed()) {
@@ -190,7 +191,7 @@ import aa4j.AA4JStatic;
 
 		@Override
 		public T getResult(Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws CancellationException, IllegalStateException {
+				throws CancellationException, TaskNotDoneException {
 			if(state.isSuccess()) {
 				return unwrapValue();
 			} else if(state.isFailed()) {
@@ -205,7 +206,7 @@ import aa4j.AA4JStatic;
 		@SuppressWarnings("unchecked")
 		public <E1 extends Throwable> T getResult(Class<E1> ex1,
 				Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws E1, CancellationException, IllegalStateException {
+				throws E1, CancellationException, TaskNotDoneException {
 			if(state.isSuccess()) {
 				return unwrapValue();
 			} else if(state.isFailed()) {
@@ -225,7 +226,7 @@ import aa4j.AA4JStatic;
 		@SuppressWarnings("unchecked")
 		public <E1 extends Throwable, E2 extends Throwable> T getResult(Class<E1> ex1, Class<E2> ex2,
 				Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws E1, E2, CancellationException, IllegalStateException {
+				throws E1, E2, CancellationException, TaskNotDoneException {
 			if(state.isSuccess()) {
 				return unwrapValue();
 			} else if(state.isFailed()) {
@@ -246,7 +247,7 @@ import aa4j.AA4JStatic;
 		@SuppressWarnings("unchecked")
 		public <E1 extends Throwable, E2 extends Throwable, E3 extends Throwable> T getResult(Class<E1> ex1,
 				Class<E2> ex2, Class<E3> ex3, Function<? super Throwable, ? extends RuntimeException> remainingExs)
-				throws E1, E2, E3, CancellationException, IllegalStateException {
+				throws E1, E2, E3, CancellationException, TaskNotDoneException {
 			if(state.isSuccess()) {
 				return unwrapValue();
 			} else if(state.isFailed()) {

@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import aa4j.TaskNotDoneException;
+
 /**
  * An asynchonously executing task without a result
  */
@@ -140,9 +142,9 @@ public interface Task {
 	 * @throws ExecutionException When the task has failed with an exception. That exception is
 	 * available through {@link ExecutionException#getCause()}.
 	 * @throws CancellationException When the task was cancelled before completion
-	 * @throws IllegalStateException When the task is not done
+	 * @throws TaskNotDoneException When the task is not done
 	 */
-	public Task checkSuccess() throws ExecutionException, CancellationException;
+	public Task checkSuccess() throws ExecutionException, CancellationException, TaskNotDoneException;
 	
 	/**
 	 * Waits until the task is done or the waiting thread is interrupted and returns normally
