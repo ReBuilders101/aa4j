@@ -30,9 +30,9 @@ import aa4j.TaskNotDoneException;
 	protected final CompletableFuture<T> stage;
 	protected final boolean isCancellable; //CompletableFuture does not contain this
 	
-	protected AbstractCompletionStageTask(CompletableFuture<T> future, boolean cancellable) {
+	protected AbstractCompletionStageTask(CompletionStage<T> future, boolean cancellable) {
 		this.awaiter = new Awaiter();
-		this.stage = future;
+		this.stage = future.toCompletableFuture();
 		this.isCancellable = cancellable;
 		
 		this.taskView = new TaskImpl();
@@ -694,7 +694,7 @@ import aa4j.TaskNotDoneException;
 	protected static Throwable wrapFailureReason(Throwable ex) {
 		if(ex == null) return null;
 		
-		if(ex instanceof CancellationException || ex instanceof CompletionException) {
+		if(ex instanceof CancellationException || ex instanceof CompletionException || ex instanceof ExecutionException) {
 			return new LiteralException(ex);
 		} else {
 			return ex;
@@ -708,21 +708,26 @@ import aa4j.TaskNotDoneException;
 		return realEx instanceof LiteralException ? realEx.getCause() : realEx;
 	}
 	
-	protected static ExecutionException unwrapThrownFailureReason(ExecutionException ex) {
+	@Deprecated //unused
+	protected static ExecutionException unwrapThrownFailureReason(ExecutionException ex) throws CancellationException {
 		var cause = Objects.requireNonNull(ex).getCause();
 		
 		if(cause instanceof LiteralException) {
 			return new ExecutionException(ex.getMessage(), cause.getCause());
+		} else if(cause instanceof CancellationException) {
+			throw (CancellationException) cause;
 		} else {
 			return ex;
 		}
 	}
 	
-	protected static ExecutionException unwrapThrownFailureReason(CompletionException ex) {
+	protected static ExecutionException unwrapThrownFailureReason(CompletionException ex) throws CancellationException{
 		var cause = Objects.requireNonNull(ex).getCause();
 		
 		if(cause instanceof LiteralException) {
 			return new ExecutionException(ex.getMessage(), cause.getCause());
+		} else if(cause instanceof CancellationException) {
+			throw (CancellationException) cause;
 		} else {
 			return new ExecutionException(ex.getMessage(), ex.getCause());
 		}
