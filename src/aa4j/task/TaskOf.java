@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import aa4j.AA4JStatic;
+import aa4j.AA4J;
 import aa4j.TaskNotDoneException;
 
 /**
@@ -244,7 +244,7 @@ public interface TaskOf<T> {
 	 * Unlike {@link #getResult()}, this method does not throw an {@link ExecutionException} because
 	 * the action is not supposed to throw any checked exceptions.
 	 * @param remainingExs A handler for all exceptions produced by the action.
-	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4JStatic#TO_UNCHECKED} is sufficient
+	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4J#TO_UNCHECKED} is sufficient
 	 * @return The result of the task, if the task was successful
 	 * @throws CancellationException When the task was cancelled
 	 * @throws TaskNotDoneException When the task is not done
@@ -259,7 +259,7 @@ public interface TaskOf<T> {
 	 * @param <E1> The type of the expected checked exception
 	 * @param ex1 The type of the expected checked exception
 	 * @param remainingExs A handler for all exceptions of another type produced by the action.
-	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4JStatic#TO_UNCHECKED} is sufficient
+	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4J#TO_UNCHECKED} is sufficient
 	 * @return The result of the task, if the task was successful
 	 * @throws E1 The exception, if it is thrown by the associated action
 	 * @throws CancellationException When the task was cancelled
@@ -278,7 +278,7 @@ public interface TaskOf<T> {
 	 * @param ex1 The type of the first expected checked exception
 	 * @param ex2 The type of the second expected checked exception
 	 * @param remainingExs A handler for all exceptions of another type produced by the action.
-	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4JStatic#TO_UNCHECKED} is sufficient
+	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4J#TO_UNCHECKED} is sufficient
 	 * @return The result of the task, if the task was successful
 	 * @throws E1 The first exception, if it is thrown by the associated action
 	 * @throws E2 The second exception, if it is thrown by the associated action
@@ -300,7 +300,7 @@ public interface TaskOf<T> {
 	 * @param ex2 The type of the second expected checked exception
 	 * @param ex3 The type of the thrid expected checked exception
 	 * @param remainingExs A handler for all exceptions of another type produced by the action.
-	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4JStatic#TO_UNCHECKED} is sufficient
+	 * Most of the time using {@code RuntimeException::new} or the equivalent {@link AA4J#TO_UNCHECKED} is sufficient
 	 * @return The result of the task, if the task was successful
 	 * @throws E1 The first exception, if it is thrown by the associated action
 	 * @throws E2 The second exception, if it is thrown by the associated action

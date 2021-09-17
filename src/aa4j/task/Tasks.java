@@ -12,7 +12,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import aa4j.AA4JStatic;
 import aa4j.TaskExecutorService;
 import aa4j.TaskNotDoneException;
 import aa4j.function.ActiveCancellableTask;
@@ -73,7 +72,7 @@ public final class Tasks {
 	public static Task delay(long time, TimeUnit unit) {
 		if(time < 0) throw new IllegalArgumentException("time cannot be negative");
 		Objects.requireNonNull(unit, "'unit' parameter must not be null");
-		return new NonBlockingTask<>(newCpf().completeOnTimeout(null, time, unit), null).task();
+		return new NonBlockingTask<>(newCpf().completeOnTimeout(null, time, unit), false).task();
 	}
 	
 	/**
@@ -85,7 +84,7 @@ public final class Tasks {
 	public static Task delayCancellable(long time, TimeUnit unit) {
 		if(time < 0) throw new IllegalArgumentException("time cannot be negative");
 		Objects.requireNonNull(unit, "'unit' parameter must not be null");
-		return new NonBlockingTask<>(newCpf().completeOnTimeout(null, time, unit), AA4JStatic.NOOP).task();
+		return new NonBlockingTask<>(newCpf().completeOnTimeout(null, time, unit), true).task();
 	}
 	
 	/**

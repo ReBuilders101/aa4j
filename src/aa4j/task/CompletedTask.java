@@ -12,25 +12,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import aa4j.AA4JStatic;
 import aa4j.TaskNotDoneException;
 
 /*package*/ final class CompletedTask<T> {
 	
 	static final Task success_untyped = new CompletedTask<>(null, null, TaskState.SUCCEEDED).taskView;
-	
-//	static <T> TaskOf<T> success(T value) {
-//		return new TaskOfView<T>(value, null, TaskState.SUCCEEDED, false);
-//	}
-//	
-//	static <T> TaskOf<T> failure(Exception exception) {
-//		Objects.requireNonNull(exception, "'exception' parameter cannot be null");
-//		return new TaskOfView<T>(null, exception, TaskState.FAILED, false);
-//	}
-//	
-//	static <T> TaskOf<T> cancelled() {
-//		return new TaskOfView<T>(null, new CancellationException(), TaskState.CANCELLED, false);
-//	}
+	private static final Runnable NOOP = () -> {};
 	
 	private ExecutionException throwableFailureReason() {
 		return new ExecutionException(unwrapFailureReason());
@@ -47,7 +34,6 @@ import aa4j.TaskNotDoneException;
 	}
 	
 	
-	//Similar to AbstractCompletionStageTask, but does not require Awaiter or CompletableFuture.
 	private final TaskState state;
 	private final Object value; //Can be T, CancellationException, Throwable
 	protected final TaskOf<T> taskOfView;
@@ -102,14 +88,14 @@ import aa4j.TaskNotDoneException;
 		@Override
 		public TaskOf<T> await(CancellationToken token) throws InterruptedException, CancellationException {
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
 		@Override
 		public TaskOf<T> awaitUninterruptibly(CancellationToken token) throws CancellationException {
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
@@ -119,7 +105,7 @@ import aa4j.TaskNotDoneException;
 			if(time < 0) throw new IllegalArgumentException("'time' parameter must not be negative");
 			Objects.requireNonNull(unit, "'unit' parameter must not be null");
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
@@ -128,13 +114,13 @@ import aa4j.TaskNotDoneException;
 				throws TimeoutException, CancellationException {
 			Objects.requireNonNull(unit, "'unit' parameter must not be null");
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
 		@Override
 		public SyncResult sync(long time, TimeUnit unit, CancellationToken token, boolean interruptible) {
-			if(token != null) token.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+			if(token != null) token.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return SyncResult.THREAD_SYNCHRONIZED;
 		}
 
@@ -395,14 +381,14 @@ import aa4j.TaskNotDoneException;
 		@Override
 		public Task await(CancellationToken token) throws InterruptedException, CancellationException {
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
 		@Override
 		public Task awaitUninterruptibly(CancellationToken token) throws CancellationException {
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
@@ -412,7 +398,7 @@ import aa4j.TaskNotDoneException;
 			if(time < 0) throw new IllegalArgumentException("'time' parameter must not be negative");
 			Objects.requireNonNull(unit, "'unit' parameter must not be null");
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
@@ -421,13 +407,13 @@ import aa4j.TaskNotDoneException;
 				throws TimeoutException, CancellationException {
 			Objects.requireNonNull(unit, "'unit' parameter must not be null");
 			Objects.requireNonNull(token, "'token' parameter must not be null")
-				.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+				.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return this;
 		}
 
 		@Override
 		public SyncResult sync(long time, TimeUnit unit, CancellationToken token, boolean interruptible) {
-			if(token != null) token.assignAction(AA4JStatic.NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
+			if(token != null) token.assignAction(NOOP, () -> new IllegalArgumentException("Token is already bound to an action"));
 			return SyncResult.THREAD_SYNCHRONIZED;
 		}
 
