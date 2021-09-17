@@ -701,7 +701,7 @@ import aa4j.TaskNotDoneException;
 		var cause = Objects.requireNonNull(ex).getCause();
 		
 		if(cause instanceof LiteralException) {
-			return new ExecutionException(ex.getMessage(), cause.getCause());
+			return new ExecutionException(cause.getCause());
 		} else if(cause instanceof CancellationException) {
 			throw (CancellationException) cause;
 		} else {
@@ -713,11 +713,11 @@ import aa4j.TaskNotDoneException;
 		var cause = Objects.requireNonNull(ex).getCause();
 		
 		if(cause instanceof LiteralException) {
-			return new ExecutionException(ex.getMessage(), cause.getCause());
+			return new ExecutionException(cause.getCause());
 		} else if(cause instanceof CancellationException) {
 			throw (CancellationException) cause;
 		} else {
-			return new ExecutionException(ex.getMessage(), ex.getCause());
+			return new ExecutionException(ex.getCause());
 		}
 	}
 }
