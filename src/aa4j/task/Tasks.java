@@ -50,7 +50,7 @@ public final class Tasks {
 	
 	/**
 	 * A completely configurable task that represents some internal time-consuming action
-	 * (such as connecting a socket). Cannot be cancelled.
+	 * (such as connecting a socket). Can be cancelled.
 	 * @param <T> The result type of the task
 	 * @param onCancellation Handles a cancellation attempt
 	 * @return A {@link TaskAccess} containing all representations of the task
@@ -64,7 +64,7 @@ public final class Tasks {
 	}
 	
 	/**
-	 * Creates a task that completes after a set delay. CAnnot be canelled.
+	 * Creates a task that completes after a set delay. Cannot be canelled.
 	 * @param time The timespan after which the task completes
 	 * @param unit The unit for the time parameter
 	 * @return A task that completes after a timeout
@@ -76,7 +76,7 @@ public final class Tasks {
 	}
 	
 	/**
-	 * Creates a task that completes after a set delay. CAnnot be canelled.
+	 * Creates a task that completes after a set delay. Can be canelled.
 	 * @param time The timespan after which the task completes
 	 * @param unit The unit for the time parameter
 	 * @return A task that completes after a timeout
