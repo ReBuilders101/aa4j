@@ -1,17 +1,26 @@
 package aa4j.task;
 
+import java.io.PrintStream;
+import java.util.Iterator;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import aa4j.AA4JStatic;
 import aa4j.TaskExecutorService;
+import aa4j.TaskNotDoneException;
 import aa4j.function.ActiveCancellableTask;
 import aa4j.function.ActiveCancellableTaskOf;
 import aa4j.function.ActiveTask;
@@ -131,8 +140,8 @@ public final class Tasks {
 	 * @param task The task to run on the executor thread
 	 * @return A {@link Task} object representing this task
 	 */
-	public static Task runnable(ActiveTask task) {
-		return runnable(task, defaultExecutor());
+	public static Task run(ActiveTask task) {
+		return run(task, defaultExecutor());
 	}
 	
 	/**
@@ -141,7 +150,7 @@ public final class Tasks {
 	 * @param executor The {@link Executor} that determines the thread to run on
 	 * @return A {@link Task} object representing this task
 	 */
-	public static Task runnable(ActiveTask task, Executor executor) {
+	public static Task run(ActiveTask task, Executor executor) {
 		final BlockingTask<?> t = new BlockingTask<>(newCpf(), false);
 		final TaskDriver<?> d = new TaskDriver<>(t, task);
 		executor.execute(d);
@@ -154,8 +163,8 @@ public final class Tasks {
 	 * @param task The task to run on the executor thread
 	 * @return A {@link Task} object representing this task
 	 */
-	public static Task runnable(ActiveCancellableTask task) {
-		return runnable(task, defaultExecutor());
+	public static Task run(ActiveCancellableTask task) {
+		return run(task, defaultExecutor());
 	}
 	
 	/**
@@ -164,7 +173,7 @@ public final class Tasks {
 	 * @param executor The {@link Executor} that determines the thread to run on
 	 * @return A {@link Task} object representing this task
 	 */
-	public static Task runnable(ActiveCancellableTask task, Executor executor) {
+	public static Task run(ActiveCancellableTask task, Executor executor) {
 		final BlockingTask<?> t = new BlockingTask<>(newCpf(), true);
 		final TaskDriver<?> d = new TaskDriver<>(t, task);
 		executor.execute(d);
@@ -178,8 +187,8 @@ public final class Tasks {
 	 * @param task The task to run on the executor thread
 	 * @return A {@link TaskOf} object representing this task
 	 */
-	public static <T> TaskOf<T> runnable(ActiveTaskOf<T> task) {
-		return runnable(task, defaultExecutor());
+	public static <T> TaskOf<T> run(ActiveTaskOf<T> task) {
+		return run(task, defaultExecutor());
 	}
 	
 	/**
@@ -189,7 +198,7 @@ public final class Tasks {
 	 * @param executor The {@link Executor} that determines the thread to run on
 	 * @return A {@link TaskOf} object representing this task
 	 */
-	public static <T> TaskOf<T> runnable(ActiveTaskOf<T> task, Executor executor) {
+	public static <T> TaskOf<T> run(ActiveTaskOf<T> task, Executor executor) {
 		final BlockingTask<T> t = new BlockingTask<>(newCpf(), false);
 		final TaskDriver<T> d = new TaskDriver<>(t, task);
 		executor.execute(d);
@@ -203,8 +212,8 @@ public final class Tasks {
 	 * @param task The task to run on the executor thread
 	 * @return A {@link TaskOf} object representing this task
 	 */
-	public static <T> TaskOf<T> runnable(ActiveCancellableTaskOf<T> task) {
-		return runnable(task, defaultExecutor());
+	public static <T> TaskOf<T> run(ActiveCancellableTaskOf<T> task) {
+		return run(task, defaultExecutor());
 	}
 	
 	/**
@@ -214,14 +223,12 @@ public final class Tasks {
 	 * @param executor The {@link Executor} that determines the thread to run on
 	 * @return A {@link TaskOf} object representing this task
 	 */
-	public static <T> TaskOf<T> runnable(ActiveCancellableTaskOf<T> task, Executor executor) {
+	public static <T> TaskOf<T> run(ActiveCancellableTaskOf<T> task, Executor executor) {
 		final BlockingTask<T> t = new BlockingTask<>(newCpf(), true);
 		final TaskDriver<T> d = new TaskDriver<>(t, task);
 		executor.execute(d);
 		return t.taskOfView;
 	}
-	
-	
 	
 	
 	
@@ -237,8 +244,63 @@ public final class Tasks {
 		return ChainedTask.create(task, chainedTask).taskOfView;
 	}
 	
+	//erasure means we will have to have some chain2 function names
+	
+	public static <R> TaskOf<R> chain(Task task, Supplier<TaskOf<R>> chainedTask) {
+		return chain(task.taskOf(), _null -> chainedTask.get());
+	}
+	
+	public static <T> Task chain2(TaskOf<T> task, Function<T, Task> chainedTask) {
+		return chain(task, t -> chainedTask.apply(t).taskOf()).task();
+	}
+	
+	public static Task chain2(Task task, Supplier<Task> chainedTask) {
+		return chain2(task.taskOf(), _null -> chainedTask.get());
+	}
+	
+	
+	
 	public static <T> TaskOf<T> withResult(Task task, Supplier<T> resultWhenComplete) {
 		return map(task.taskOf(), _null -> resultWhenComplete.get());
+	}
+	
+	
+	
+	
+	/**
+	 * For debugging purposes. Prints a short report on the tasks current state to the
+	 * standard output stream
+	 * @param title A name for the task, so it can be recognized in the logs. May be null.
+	 * @param task The task to report on. Must not be null
+	 */
+	public static void report(String title, TaskOf<?> task) { 
+		report(title == null ? "" : " '" + title + "'", Objects.requireNonNull(task), true, System.out);
+	}
+	
+	/**
+	 * For debugging purposes. Prints a short report on the tasks current state to the
+	 * standard output stream
+	 * @param title A name for the task, so it can be recognized in the logs. May be null.
+	 * @param task The task to report on. Must not be null
+	 */
+	public static void report(String title, Task task) {
+		report(title == null ? "" : " '" + title + "'", Objects.requireNonNull(task).taskOf(), false, System.out);
+	}
+	
+	private static void report(String rawTitle, TaskOf<?> task, boolean result, PrintStream stream) {
+		stream.println("\nReport on Task" + rawTitle + ":");
+		stream.println("Task state: " + task.getState());
+		try {
+			var r = task.getResult();
+			if(result) {
+				System.out.println("Task result: " + r + " [" +r.getClass().getName() + "]");
+			} else {
+				System.out.println("Task completed.");
+			}
+		} catch (CancellationException | TaskNotDoneException | ExecutionException e) {
+			System.out.println("Exception while retrieving result: ");
+			e.printStackTrace(stream);
+		}
 	}
 	
 	/**
