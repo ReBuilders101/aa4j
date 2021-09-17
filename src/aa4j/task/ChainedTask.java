@@ -49,7 +49,10 @@ class ChainedTask<T> extends AbstractCompletionStageTask<T> {
 				final var task = chainedTask.apply(u);
 				state.task2ccrq = task::cancel;
 				return task.stage();
-			} else { //Alerady CHECKED???
+			} else { //Alerady CHECKED??? ---should not happen at all ever, unless someone is messing with the AtomicInteger
+				state.task2ccrq = () -> {
+					throw new Error("Invalid ChainedTask cancellation state caused wait for CancelResult to fail");
+				}; //at this point, we are already fucked, but at least don't leave another thread in an infinite spin-wait 
 				throw new Error("Invalid ChainedTask cancellation state");
 			}
 		};

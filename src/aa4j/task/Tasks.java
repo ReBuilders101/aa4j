@@ -2,6 +2,7 @@ package aa4j.task;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
@@ -29,33 +30,35 @@ public final class Tasks {
 	 * @return A {@link TaskAccess} containing all representations of the task
 	 */
 	public static <T> TaskAccess<T> create() {
-		return new NonBlockingTask<>(newCpf(), null);
+		return new NonBlockingTask<>(newCpf(), false);
 	}
 	
 	/**
 	 * A completely configurable task that represents some internal time-consuming action
 	 * (such as connecting a socket). Cannot be cancelled.
 	 * @param <T> The result type of the task
+	 * @param stage Any {@link CompletionStage} that interacts with {@link CompletableFuture}.
+	 * The task will share behavior with the completion stage.
+	 * @param canCancel Whether the task can be cancelled
 	 * @return A {@link TaskAccess} containing all representations of the task
 	 */
-	@Deprecated
-	public static <T> TaskAccess<T> manualBlocking() {
-		return new NonBlockingTask<>(newCpf(), null);
+	public static <T> TaskAccess<T> create(CompletionStage<T> stage, boolean canCancel) {
+		return new NonBlockingTask<>(Objects.requireNonNull(stage), canCancel);
 	}
 	
 	/**
 	 * A completely configurable task that represents some internal time-consuming action
-	 * (such as connecting a socket). Can be cancelled while running.
+	 * (such as connecting a socket). Cannot be cancelled.
 	 * @param <T> The result type of the task
-	 * @param cancellationHandler The method to invoke when cancellation is requested. It is assumed that 
-	 * this cancellation is always successful.
+	 * @param onCancellation Handles a cancellation attempt
 	 * @return A {@link TaskAccess} containing all representations of the task
-	 * @throws NullPointerException When {@code cancellationHandler} is {@code null}
 	 */
-	@Deprecated
-	public static <T> TaskAccess<T> manualBlocking(Runnable cancellationHandler) {
-		Objects.requireNonNull(cancellationHandler, "'cancellationHandler' parameter must not be null");
-		return new NonBlockingTask<>(newCpf(), cancellationHandler);
+	public static <T> TaskAccess<T> create(Runnable onCancellation) {
+		if(onCancellation == null) {
+			return new NonBlockingTask<>(newCpf(), true);
+		} else {
+			return new NonBlockingTask<>(newCpf(), onCancellation);
+		}
 	}
 	
 	/**

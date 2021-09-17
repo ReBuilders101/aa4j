@@ -40,12 +40,24 @@ import aa4j.TaskNotDoneException;
 	
 	protected TaskState getStateImpl() {
 		if(stage.isDone()) {
-			if(stage.isCancelled()) return TaskState.CANCELLED;
+			if(isCancelledFromEx()) return TaskState.CANCELLED;
 			if(stage.isCompletedExceptionally()) return TaskState.FAILED; //cancelled is already excluded
 			return TaskState.SUCCEEDED;
 		} else {
 			return TaskState.RUNNING;
 		}
+	}
+	
+	private boolean isCancelledFromEx() {
+		try {
+			stage.getNow(null);
+		} catch (CompletionException e) {
+			var ex = e.getCause();
+			return ex instanceof CancellationException;
+		} catch (CancellationException e) {
+			return true;
+		}
+		return false;
 	}
 	
 	protected abstract CancelResult cancelImpl();

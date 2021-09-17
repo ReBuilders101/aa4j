@@ -2,7 +2,6 @@ package aa4j.task;
 
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 
@@ -16,13 +15,13 @@ import java.util.concurrent.Future;
 	private final TaskCompletionSourceOf<T> tcsOfView;
 	private final boolean isCancellable;
 	
-	protected NonBlockingTask(CompletableFuture<T> usedCpf, Runnable cancellationHandler) {
+	protected NonBlockingTask(CompletionStage<T> usedCpf, Runnable cancellationHandler) {
 		this(usedCpf, true);
 		Objects.requireNonNull(cancellationHandler);
 		stage.whenComplete(whenCancelledImpl(cancellationHandler));
 	}
 	
-	protected NonBlockingTask(CompletableFuture<T> usedCpf, boolean canCancel) {
+	protected NonBlockingTask(CompletionStage<T> usedCpf, boolean canCancel) {
 		super(usedCpf);
 		this.isCancellable = canCancel;
 		this.tcsView = new TCS();
