@@ -11,9 +11,11 @@ import aa4j.CancellationStatusSupplier;
 /*package*/ final class BlockingTask<T> extends AbstractCompletionStageTask<T> implements CancellationStatusSupplier {
 
 	private volatile boolean cancellationRequested;
+	private final boolean isCancellable;
 	
 	protected BlockingTask(CompletableFuture<T> usedCpf, boolean canCancelFlag) {
-		super(usedCpf, canCancelFlag);
+		super(usedCpf);
+		isCancellable = canCancelFlag;
 		cancellationRequested = false;
 	}
 

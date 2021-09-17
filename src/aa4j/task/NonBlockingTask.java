@@ -14,6 +14,7 @@ import java.util.concurrent.Future;
 	
 	private final TaskCompletionSource tcsView;
 	private final TaskCompletionSourceOf<T> tcsOfView;
+	private final boolean isCancellable;
 	
 	protected NonBlockingTask(CompletableFuture<T> usedCpf, Runnable cancellationHandler) {
 		this(usedCpf, true);
@@ -22,7 +23,8 @@ import java.util.concurrent.Future;
 	}
 	
 	protected NonBlockingTask(CompletableFuture<T> usedCpf, boolean canCancel) {
-		super(usedCpf, canCancel);
+		super(usedCpf);
+		this.isCancellable = canCancel;
 		this.tcsView = new TCS();
 		this.tcsOfView = new TCSOf();
 	}

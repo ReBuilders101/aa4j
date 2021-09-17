@@ -28,12 +28,10 @@ import aa4j.TaskNotDoneException;
 	protected final TaskOf<T> taskOfView;
 	protected final Future<T> futureView;
 	protected final CompletableFuture<T> stage;
-	protected final boolean isCancellable; //CompletableFuture does not contain this
 	
-	protected AbstractCompletionStageTask(CompletionStage<T> future, boolean cancellable) {
+	protected AbstractCompletionStageTask(CompletionStage<T> future) {
 		this.awaiter = new Awaiter();
 		this.stage = future.toCompletableFuture();
-		this.isCancellable = cancellable;
 		
 		this.taskView = new TaskImpl();
 		this.taskOfView = new TaskOfImpl();
@@ -226,11 +224,6 @@ import aa4j.TaskNotDoneException;
 		}
 
 		@Override
-		public boolean isCancellable() {
-			return isCancellable;
-		}
-
-		@Override
 		public Future<?> future() {
 			return futureView;
 		}
@@ -360,11 +353,6 @@ import aa4j.TaskNotDoneException;
 		@Override
 		public TaskState getState() {
 			return getStateImpl();
-		}
-
-		@Override
-		public boolean isCancellable() {
-			return isCancellable;
 		}
 
 		private T getResultIfComplete() throws CompletionException, CancellationException, TaskNotDoneException {

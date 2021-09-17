@@ -195,15 +195,6 @@ public interface TaskOf<T> {
 		return getState().isFailed();
 	}
 	
-	/**
-	 * Whether the task can be cancelled while running.<br>
-	 * Cancelling before execution starts is always possible and cancelling after
-	 * execution is done has no effect.<br>
-	 * Even if a task is marked as cancellable, the associated action can still ignore the cancellation request.
-	 * @return {@code true} if the task can be cancelled while running, {@code false} if not
-	 */
-	public boolean isCancellable();
-	
 	//Result methods
 	/**
 	 * Waits until the task is done or the waiting thread is interrupted and returns the

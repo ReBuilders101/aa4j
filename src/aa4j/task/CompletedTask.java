@@ -17,7 +17,7 @@ import aa4j.TaskNotDoneException;
 
 /*package*/ final class CompletedTask<T> {
 	
-	static final Task success_untyped = new CompletedTask<>(null, null, TaskState.SUCCEEDED, false).taskView;
+	static final Task success_untyped = new CompletedTask<>(null, null, TaskState.SUCCEEDED).taskView;
 	
 //	static <T> TaskOf<T> success(T value) {
 //		return new TaskOfView<T>(value, null, TaskState.SUCCEEDED, false);
@@ -53,11 +53,9 @@ import aa4j.TaskNotDoneException;
 	protected final TaskOf<T> taskOfView;
 	protected final Task taskView;
 	protected final Future<T> futureView;
-	private final boolean appearCancellable;
 	
-	protected CompletedTask(T completionValue, Throwable altValue, TaskState state, boolean cancellable) {
+	protected CompletedTask(T completionValue, Throwable altValue, TaskState state) {
 		this.state = state;
-		this.appearCancellable = cancellable;
 		
 		if(state == TaskState.SUCCEEDED) {
 			value = completionValue;
@@ -152,12 +150,7 @@ import aa4j.TaskNotDoneException;
 		public TaskState getState() {
 			return state;
 		}
-
-		@Override
-		public boolean isCancellable() {
-			return appearCancellable;
-		}
-
+		
 		@Override
 		public T getResult() throws ExecutionException, CancellationException, TaskNotDoneException {
 			if(state.isCancelled()) {
@@ -460,11 +453,6 @@ import aa4j.TaskNotDoneException;
 		@Override
 		public TaskState getState() {
 			return state;
-		}
-
-		@Override
-		public boolean isCancellable() {
-			return appearCancellable;
 		}
 
 		@Override
