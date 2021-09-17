@@ -3,7 +3,6 @@ package aa4j;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import aa4j.function.SyncAction;
 import aa4j.task.TaskOf;
 
 /**
@@ -12,17 +11,12 @@ import aa4j.task.TaskOf;
 public final class AA4JStatic {
 	private AA4JStatic() { throw new RuntimeException("No instance for you"); }
 	
-	public static <Awaited, Continued> TaskOf<Continued> await(TaskOf<Awaited> awaitedTask, Function<Awaited, Continued> continuation) {
-		//TODO
-		return null;
-	}
-	
 	public static <T> OnAwaitActions<T> await(TaskOf<T> task) {
-		return null;
+		return new AwaitStage<>(task);
 	}
 	
 	public static <T> OnSyncActions<T> sync(Supplier<T> result) {
-		return null;
+		return new SyncStage<>(result);
 	}
 	
 	/**

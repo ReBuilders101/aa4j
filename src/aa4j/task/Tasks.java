@@ -1,10 +1,7 @@
 package aa4j.task;
 
 import java.io.PrintStream;
-import java.util.Iterator;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -15,9 +12,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
 import aa4j.AA4JStatic;
 import aa4j.TaskExecutorService;
 import aa4j.TaskNotDoneException;
@@ -230,8 +224,15 @@ public final class Tasks {
 		return t.taskOfView;
 	}
 	
-	
-	
+	/**
+	 * Maps the result of this task to a different type using a non-blocking mapping function.
+	 * @param <T> Type of the existing task
+	 * @param <R> Type of the mapped result
+	 * @param task The existing task that should be mapped
+	 * @param mapFunc A function that can map the task result to the required type
+	 * @return A task that completes after the existing task and the mapping function.
+	 * In case of cancellation or failure, the returend task will have the same state.
+	 */
 	public static <T,R> TaskOf<R> map(TaskOf<T> task, Function<T, R> mapFunc) {
 		Objects.requireNonNull(task, "'task' parameter must not be null");
 		Objects.requireNonNull(mapFunc, "'mapFunc' parameter must not be null");
